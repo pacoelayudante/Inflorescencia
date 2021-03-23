@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24a108c49c3c1b248aff06a33654294a, type: 3}
+  m_Name: ConfigExtraerContornoFlor
+  m_EditorClassIdentifier: 
+  _sizeLimit: 2048
+  _border: 4
+  _threshold: 70
+  _threshType: 8
+  _usarCanny: 1
+  _cannyBajo: 50
+  _cannyAlto: 200
+  _apertureCanny: 3
+  _cannyL2: 0
