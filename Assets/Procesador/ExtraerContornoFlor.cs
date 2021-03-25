@@ -65,47 +65,11 @@ public class ExtraerContornoFlor : System.IDisposable
 
         if (jerarquia.Length == 0) return null;
         contornos = OrdenarContornosEvitandoCanny(puntos,jerarquia,0,contornos);
-        Debug.Log(contornos.Count);
-        /*if (jerarquia.Length == 0) return null;
-        var nexts = 0;
-        while (nexts != -1) {
-            var j = jerarquia[nexts];
-            //el primer piso lo quiero ignorar, pero quiero hacer una lista de todos
-            //los contornos que estan abajo de este primer piso
-            List<int> nietos = new List<int>();
-            if (j.Child != -1) {
-                var ch = j.Child;
-                while (ch != -1) {
-                    var chDelCh = jerarquia[ch].Child;
-                    while (chDelCh != -1) {
-                        nietos.Add(chDelCh);
-                        chDelCh = jerarquia[chDelCh].Next;//aca habriaque ver si hay aun mas descendencia! ojo!
-                    }
-                    ch = jerarquia[ch].Next;
-                }
-
-            }
-
-            contornos.Add(new Contorno(){
-                color = Color.HSVToRGB(Random.value,1,1),
-                contornosInternos=nietos.Select(n=>new Contorno(){vertices=puntos[n].Select(p => new Vector2(p.X, p.Y)).ToArray()}).ToArray(),
-                vertices=puntos[nexts].Select(p => new Vector2(p.X, p.Y)).ToArray()
-            });
-            nexts = j.Next;
-        }*/
         
-        // jerarquia.Select((j, idx) => new { jerarq = j, verts = puntos[idx] }).Where(j => j.jerarq.Parent == -1)
-        //     .Select(j => new Contorno()
-        //     {
-        //         vertices = j.verts.Select(p => new Vector2(p.X, p.Y)).ToArray(),
-        //         contornosInternos = new[] { new Contorno() { vertices = puntos[j.jerarq.Child].Select(p => new Vector2(p.X, p.Y)).ToArray() } }
-        //     }
-        //     );
-
         if (texturesObserve != null)
         {
             Cv2.CvtColor(matImagenLowRes, matImagenLowRes, ColorConversionCodes.GRAY2RGB);
-            //Cv2.DrawContours(matImagenLowRes, puntos, -1, new Scalar(0, 100, 255), Mathf.CeilToInt(Mathf.Min(matImagenLowRes.Width * 0.005f, 1)));
+            
             foreach(var cont in contornos) {
                 var dibujar = new[]{cont.vertices.Select(v=>new Point(v.x,v.y))};
                 Cv2.DrawContours(matImagenLowRes, dibujar, -1, new Scalar(cont.color.b*255, cont.color.g*255, cont.color.r*255), Mathf.CeilToInt(Mathf.Min(matImagenLowRes.Width * 0.005f, 1)));
@@ -151,8 +115,8 @@ public class ExtraerContornoFlor : System.IDisposable
 
             lista.Add(new Contorno(){
                 color = Color.HSVToRGB(Random.value,1,1),
-                contornosInternos=bisnietos.Select(n=>new Contorno(){color=Color.magenta,vertices=puntos[n].Select(p => new Vector2(p.X, p.Y)).ToArray()}).ToArray(),
-                vertices=puntos[nexts].Select(p => new Vector2(p.X, p.Y)).ToArray()
+                contornosInternos=bisnietos.Select(n=>new Contorno(){color=Color.magenta,vertices=puntos[n].Select(p => new Vector3(p.X, p.Y)).ToArray()}).ToArray(),
+                vertices=puntos[nexts].Select(p => new Vector3(p.X, p.Y)).ToArray()
             });
             nexts = j.Next;
         }
