@@ -6,6 +6,8 @@ using LibTessDotNet;
 
 public class TestContorno : MonoBehaviour
 {
+    public Vector3 camPosFinal,camPosInicial;
+    public Quaternion camRotFinal,camRotInicial;
     public ConfigExtraerContornoFlor config;
     public Texture2D texturaDeContornos;
     ExtraerContornoFlor extractor;
@@ -16,8 +18,11 @@ public class TestContorno : MonoBehaviour
     public int cantSlices = 15;
     public int selectAgente = 0;
     public bool actualizarMesh = true;
+    public float duracionCrecimiento = 5f;
+    public AnimationCurve curvaAlturaFlor = AnimationCurve.EaseInOut(0,0,1,1);
 
     public List<Contorno> contornos;
+    float tiempoCrecimiento;
 
     List<Vector3> verticesBase, verticesTotales;
     List<int> triangulos, triangulosTapa, triangulosLado;
@@ -162,14 +167,31 @@ public class TestContorno : MonoBehaviour
     {
         if (agentesVivos != null && verticesVivos != null)
         {
-            UpdateRepulsion(dt);
-            UpdateCercanos(dt);
-            UpdateFuerzas(dt);
+            if (tiempoCrecimiento < duracionCrecimiento) {
+                UpdateRepulsion(dt);
+                UpdateCercanos(dt);
+                UpdateFuerzas(dt);
+                tiempoCrecimiento += dt;
+                // Camera.main.transform.position = Vector3.Lerp(camPosInicial,camPosFinal,curvaAlturaFlor.Evaluate(tiempoCrecimiento/duracionCrecimiento));
+                // Camera.main.transform.rotation = Quaternion.Lerp(camRotInicial,camRotFinal,curvaAlturaFlor.Evaluate(tiempoCrecimiento/duracionCrecimiento));
+                Camera.main.transform.position = Vector3.Lerp(camPosInicial,camPosFinal,(tiempoCrecimiento/duracionCrecimiento));
+                Camera.main.transform.rotation = Quaternion.Lerp(camRotInicial,camRotFinal,(tiempoCrecimiento/duracionCrecimiento));
+            }
             if (actualizarMesh && meshGenerada != null)
             {
                 for (int v = 0, n = verticesVivos.Length; v < n; v++)
                 {
                     verticesTotales[v] = verticesVivos[v];
+                    
+                    for (int s=0; s<=cantSlices; s++) {
+                        var amt = s/(float)cantSlices;
+
+                        // var vecGo = Vector3.Lerp(verticesBase[v],verticesVivos[v],curvaAlturaFlor.Evaluate( amt ));
+                        // vecGo.z = amt;
+                        var vecGo = Vector3.Lerp(verticesBase[v],verticesVivos[v],amt);
+                        vecGo.z = curvaAlturaFlor.Evaluate( amt )*altura*tiempoCrecimiento/duracionCrecimiento;
+                        verticesTotales[v+cantVerticesBase*(cantSlices)-s*cantVerticesBase] = vecGo;
+                    }
                 }
                 meshGenerada.vertices = verticesTotales.ToArray();
 
