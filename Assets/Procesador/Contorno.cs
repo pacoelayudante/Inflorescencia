@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // [System.Serializable]
-public struct Contorno
+public class Contorno
 {
     [SerializeField]public Color color;
     [SerializeField]public Vector3[] vertices;
