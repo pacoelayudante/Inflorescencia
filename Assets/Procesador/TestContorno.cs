@@ -92,16 +92,13 @@ public class TestContorno : MonoBehaviour
     {
         if (contornos == null || contornos.Count == 0) Extraer();
         if (contornos == null || contornos.Count == 0) return;
-        //var vertCountEnUnaCapa = contornos.Sum(cont => cont.vertices.Length + cont.contornosInternos.Sum(subc => subc.vertices.Length));
-
-        //int offsetIndexes = 0;
+        
         List<Agente> listaAgentes = new List<Agente>();
 
-        for (int c = 0, nC = contornos.Count; c < nC; c++)//foreach (var contorno in contornos)
+        for (int c = 0, nC = contornos.Count; c < nC; c++)
         {
             var contorno = contornos[c];
             var vertices = contorno.vertices.Concat(contorno.contornosInternos.SelectMany(c => c.vertices)).ToArray();//en el mesh plano esto medio da igual
-            // var vcount = vertices.Count();
 
             var agentes = new List<Agente>();
             for (int i = 0, nV = vertices.Length; i < nV; i++)
@@ -119,29 +116,13 @@ public class TestContorno : MonoBehaviour
                 }
                 agentes.Add(new Agente(v * escala, cercanos.ToArray()));
             }
-            /*
-                        var agentes = vertices.Select((v, idx) =>
-                            new Agente(v * escala, vertices.Skip(idx + 1)
-                                // .Select((otro,idxOtro)=>idx+1+idxOtro+offsetIndexes)
-                                //.Select((otro,idxOtro)=>Vector3.Distance(v,otro)<distCerca?(idx+1+idxOtro+offsetIndexes):-1)
-                                .Select((otro, idxOtro) => new Agente.AgenteComboIndexDist((idx + 1 + idxOtro + offsetIndexes), Vector3.Distance(v, otro), distCerca))
-                                .Where(otro => otro.idx != -1).ToArray())
-                        ).ToArray();*/
 
             listaAgentes.AddRange(agentes);
-            // offsetIndexes += vcount;
         }
 
         agentesVivos = listaAgentes.ToArray();
 
         verticesVivos = listaAgentes.Select(agt => new Vector3(agt.x, agt.y, altura * escala)).ToArray();
-
-        // for(int i=0,n=verticesVivos.Length;i<n;i++) {
-        //     for (int i2=0,n2=agt.cercanosIdx.Length; i2<n2;i2++) {
-        //         agentesVivos[i].cercanosDist[i2] = Vector3.Distance(verticesVivos[i],verticesVivos[i2]);
-        //     }
-        // }
-
     }
 
     private void OnDrawGizmosSelected()
@@ -364,16 +345,7 @@ public class TestContorno : MonoBehaviour
                 }
 
                 teselasPorContorno[c].Tessellate(WindingRule.Positive, ElementType.Polygons, 3, VertexCombine);
-
-                // var verticesAgrupados = teselasPorContorno[c].Vertices.Select(v=>(ContVertIdx)v.Data).GroupBy(d=>d.contorno)
-                //     ;// .ToDictionary(v=>v.Key);
-
-
-                // foreach (var cont in verticesAgrupados) {
-                //     cont.Key.vertices = cont.OrderBy(d=>d.vidx).Select(v=> cont.Key.vertices[v.vidx] ).ToArray();
-                //     cont.
-                // }
-
+                
                 triangulosTapa.AddRange(
                     teselasPorContorno[c].Elements.Select(ind => ((ContVertIdx)teselasPorContorno[c].Vertices[ind].Data).vidx)
                 );
@@ -384,12 +356,7 @@ public class TestContorno : MonoBehaviour
 
             verticesTotales = new List<Vector3>();
             verticesTotales.AddRange(verticesBase.Select(v => v + offaltura));
-
-            // verticesTotales.AddRange(verticesBase.Select(v => v + offaltura*0.5f));
-            // triangulos.AddRange(triangulosLado);
-            // verticesTotales.AddRange(verticesBase.Select(v => v ));
-            // triangulos.AddRange(triangulosLado.Select(idx => idx + cantVerticesBase));
-
+            
             if (cantSlices < 1) cantSlices = 1;
             int offsetVertex = 0;
             for (float i = cantSlices-1f;i >= 0f; i--)
@@ -404,124 +371,6 @@ public class TestContorno : MonoBehaviour
             meshGenerada.RecalculateNormals();
             meshGenerada.RecalculateBounds();
             meshGenerada.RecalculateTangents();
-        }
-    }
-
-    [ContextMenu("MeshificarMuros")]
-    public void MeshificarMuros()
-    {
-        if (contornos != null && tirarMeshAca)
-        {
-            if (meshGenerada == null) meshGenerada = new Mesh();
-            else
-            {
-                meshGenerada.Clear();
-            }
-            tirarMeshAca.sharedMesh = meshGenerada;
-
-            List<Vector3> vertices = new List<Vector3>();
-            List<int> triangles = new List<int>();
-            var vertCountEnUnaCapa = contornos.Sum(cont => cont.vertices.Length + cont.contornosInternos.Sum(subc => subc.vertices.Length));
-
-            foreach (var contorno in contornos)
-            {
-
-                {
-                    var vertCont = contorno.vertices;
-                    var baseVertIndexes = vertices.Count;
-                    for (int i = 0; i < vertCont.Length; i++)
-                    {
-                        vertices.Add(vertCont[i] * escala);
-                        //vertices.Add((Vector3)vertCont[i]*escala+Vector3.forward*altura*escala);
-                        int i2 = (i + 1) % vertCont.Length;
-                        triangles.Add(i + baseVertIndexes);//este
-                        triangles.Add(i + vertCountEnUnaCapa + baseVertIndexes);//este arriba
-                        triangles.Add(i2 + baseVertIndexes);//siguiente
-
-                        triangles.Add(i + vertCountEnUnaCapa + baseVertIndexes);//este arriba
-                        triangles.Add(i2 + vertCountEnUnaCapa + baseVertIndexes);//siguiente arriba
-                        triangles.Add(i2 + baseVertIndexes);//siguiente
-                    }
-                }
-
-                foreach (var continterno in contorno.contornosInternos)
-                {
-                    var vertCont = continterno.vertices;
-                    var baseVertIndexes = vertices.Count;
-                    for (int i = 0; i < vertCont.Length; i++)
-                    {
-                        vertices.Add(vertCont[i] * escala);
-                        //vertices.Add((Vector3)vertCont[i]*escala+Vector3.forward*10*escala);
-                        int i2 = (i + 1) % vertCont.Length;
-                        triangles.Add(i + baseVertIndexes);//este
-                        triangles.Add(i + vertCountEnUnaCapa + baseVertIndexes);//este arriba
-                        triangles.Add(i2 + baseVertIndexes);//siguiente
-
-                        triangles.Add(i + vertCountEnUnaCapa + baseVertIndexes);//este arriba
-                        triangles.Add(i2 + vertCountEnUnaCapa + baseVertIndexes);//siguiente arriba
-                        triangles.Add(i2 + baseVertIndexes);//siguiente
-                    }
-                }
-
-            }
-            var offsetAltura = Vector3.forward * altura * escala;
-            meshGenerada.vertices = vertices.Concat(vertices.Select(v => v + offsetAltura)).ToArray();
-            //meshGenerada.vertices = vertices.ToArray();
-            meshGenerada.triangles = triangles.ToArray();
-            meshGenerada.RecalculateNormals();
-            meshGenerada.RecalculateBounds();
-            meshGenerada.RecalculateTangents();
-
-        }
-    }
-
-    [ContextMenu("MeshificarPlano")]
-    public void MeshificarPlano()
-    {
-        if (contornos != null && tirarMeshAca)
-        {
-            if (meshGenerada == null) meshGenerada = new Mesh();
-            else
-            {
-                meshGenerada.Clear();
-            }
-            tirarMeshAca.sharedMesh = meshGenerada;
-
-            List<Vector3> vertices = new List<Vector3>();
-            List<int> triangles = new List<int>();
-
-            var idxOffset = 0;
-            for (int i = 0, n = contornos.Count; i < n; i++)
-            {
-                var contorno = contornos[i];
-                Tess teselador = new Tess();
-                teselador.AddContour(contornos[i].vertices.Select((v, idx) => new ContourVertex(new Vec3(v.x, v.y, 0))).ToArray(), ContourOrientation.Clockwise);
-                idxOffset += contorno.vertices.Length;
-                foreach (var continterno in contorno.contornosInternos)
-                {
-                    teselador.AddContour(continterno.vertices.Select((v, idx) => new ContourVertex(new Vec3(v.x, v.y, 0))).ToArray(), ContourOrientation.CounterClockwise);
-                    idxOffset += continterno.vertices.Length;
-                }
-                teselador.Tessellate(WindingRule.Positive, ElementType.Polygons, 3, VertexCombine);
-
-                contorno.contornosInternos = new Contorno[0];
-
-                contorno.vertices = teselador.Vertices
-                    .Select(v => new Vector3(v.Position.X, v.Position.Y, 0) * escala).ToArray();
-
-                triangles.AddRange(teselador.Elements.Select(e => e + vertices.Count));
-                vertices.AddRange(contorno.vertices);
-
-                for (int j = 0, n2 = contorno.vertices.Length; j < n2; j++) contorno.vertices[j] /= escala;
-                //contornos[i] = contorno;
-            }
-
-            meshGenerada.vertices = vertices.ToArray();
-            meshGenerada.triangles = triangles.ToArray();
-            meshGenerada.RecalculateNormals();
-            meshGenerada.RecalculateBounds();
-            meshGenerada.RecalculateTangents();
-
         }
     }
 
