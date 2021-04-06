@@ -17,25 +17,33 @@ public class ExtraerContornoFlor : System.IDisposable
     public float CannyAlto => config._cannyAlto;
     public int ApertureCanny => config._apertureCanny;
     public bool CannyL2 => config._cannyL2;
+    public bool CannyDilate => config._cannyDilate;
+    public bool CannyErode => config._cannyErode;
+    public ConfigExtraerContornoFlor.EpsilonDeAproximacion EpsilonDeAproximacion => config._epsilonDeAproximacion;
+    public double ValorDeEpsilon => config._valorDeEpsilon>0?config._valorDeEpsilon:0.001d;
 
+    
     public ExtraerContornoFlor(ConfigExtraerContornoFlor config, bool autoIniciar = true)
     {
         this.config = config;
         if (autoIniciar) Iniciar();
     }
 
-    Mat matImagenLowRes, matBin;
+    Mat matImagenLowRes, matBin,
+        matClean;
 
     void Iniciar()
     {
         if (matImagenLowRes == null) matImagenLowRes = new Mat();
         if (matBin == null) matBin = new Mat();
+        if (matClean == null) matClean = new Mat();
     }
 
     public void Dispose()
     {
         matImagenLowRes?.Dispose();
         matBin?.Dispose();
+        matClean?.Dispose();
     }
 
     public List<Contorno> Procesar(Mat matImagenFuente, Texture2D[] texturesObserve = null)
@@ -55,6 +63,8 @@ public class ExtraerContornoFlor : System.IDisposable
         Cv2.CvtColor(matImagenLowRes, matImagenLowRes, ColorConversionCodes.RGB2GRAY);
         if (UsarCanny) Cv2.Canny(matImagenLowRes, matBin, CannyBajo, CannyAlto, ApertureCanny, CannyL2);
         else Cv2.Threshold(matImagenLowRes, matBin, Threshold, 255, ThreshType);
+        if (CannyDilate) Cv2.Dilate(matBin, matBin, matClean);
+        if (CannyErode) Cv2.Erode(matBin, matBin, matClean);
         //borde extra por las dudas si hay ruido en lso bordes
         Cv2.Rectangle(matBin,new Point(0,0), new Point(matBin.Width,matBin.Height),new Scalar(0),Border);
         if (texturesObserve != null) texturesObserve[0] = OpenCvSharp.Unity.MatToTexture(matBin, texturesObserve[0]);
@@ -62,6 +72,17 @@ public class ExtraerContornoFlor : System.IDisposable
         Point[][] puntos;
         HierarchyIndex[] jerarquia;
         Cv2.FindContours(matBin, out puntos, out jerarquia, RetrievalModes.Tree, ContourApproximationModes.ApproxTC89KCOS);
+
+        if (EpsilonDeAproximacion != ConfigExtraerContornoFlor.EpsilonDeAproximacion.NoAproximar) {
+            var epsilon = ValorDeEpsilon;
+            for(int i=0,n=puntos.Length;i<n;i++) {
+                if (EpsilonDeAproximacion==ConfigExtraerContornoFlor.EpsilonDeAproximacion.EpsilonRelativoArcLen) {
+                    epsilon *= Cv2.ArcLength(puntos[i],true);
+                }
+                puntos[i] = Cv2.ApproxPolyDP(puntos[i],epsilon,true);
+                epsilon = ValorDeEpsilon;
+            }
+        }
 
         if (jerarquia.Length == 0) return null;
         contornos = OrdenarContornosEvitandoCanny(puntos,jerarquia,0,contornos);

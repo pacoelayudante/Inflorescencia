@@ -13,11 +13,15 @@ MonoBehaviour:
   m_Name: ConfigExtraerContornoFlor
   m_EditorClassIdentifier: 
   _sizeLimit: 2048
-  _border: 4
+  _border: 6
   _threshold: 70
   _threshType: 8
   _usarCanny: 1
-  _cannyBajo: 50
+  _cannyBajo: 100
   _cannyAlto: 200
   _apertureCanny: 3
   _cannyL2: 0
+  _cannyDilate: 1
+  _cannyErode: 0
+  _epsilonDeAproximacion: 1
+  _valorDeEpsilon: 1

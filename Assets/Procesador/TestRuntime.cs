@@ -7,10 +7,12 @@ using System.Linq;
 
 public class TestRuntime : MonoBehaviour
 {
+    public static Texture2D texturaExtraida;
     public bool soloMarcar;
     public ConfigExtraerHoja config;
     public RawImage cam, canny, mask, result;
     public Material camMat;
+    public string escenaTrasDetectar;
     ExtraerHoja extractor;
     Texture2D[] texturas = new Texture2D[3];
     WebCamTexture camTex;
@@ -97,6 +99,9 @@ public class TestRuntime : MonoBehaviour
         var path = UnityEditor.EditorUtility.SaveFilePanelInProject("extraida","dibujo","png","");
         if (string.IsNullOrEmpty(path)) return;
         System.IO.File.WriteAllBytes(path,resultadoExtraido.EncodeToPNG());
+        #else
+        texturaExtraida = resultadoExtraido;
+        UnityEngine.SceneManagement.SceneManager.LoadScene(escenaTrasDetectar);
         #endif
     }
 }

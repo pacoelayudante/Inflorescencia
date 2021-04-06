@@ -311,7 +311,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &264116219
 RectTransform:
   m_ObjectHideFlags: 0
@@ -325,7 +325,7 @@ RectTransform:
   m_Children:
   - {fileID: 350076632}
   m_Father: {fileID: 1577209054}
-  m_RootOrder: 0
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -623,7 +623,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &403684021
 RectTransform:
   m_ObjectHideFlags: 0
@@ -637,7 +637,7 @@ RectTransform:
   m_Children:
   - {fileID: 1072981420}
   m_Father: {fileID: 1577209054}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -659,7 +659,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &446725323
 RectTransform:
   m_ObjectHideFlags: 0
@@ -673,7 +673,7 @@ RectTransform:
   m_Children:
   - {fileID: 694405715}
   m_Father: {fileID: 1577209054}
-  m_RootOrder: 3
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -1834,6 +1834,7 @@ MonoBehaviour:
   mask: {fileID: 1293397686}
   result: {fileID: 1072981418}
   camMat: {fileID: 2100000, guid: 52e3fe40db941f54c911afcc646249fd, type: 2}
+  escenaTrasDetectar: testflor
 --- !u!114 &1577209051
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1906,10 +1907,10 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_Children:
-  - {fileID: 264116219}
-  - {fileID: 660478088}
-  - {fileID: 403684021}
   - {fileID: 446725323}
+  - {fileID: 660478088}
+  - {fileID: 264116219}
+  - {fileID: 403684021}
   - {fileID: 796881090}
   - {fileID: 1564426127}
   m_Father: {fileID: 0}

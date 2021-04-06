@@ -8,8 +8,12 @@ public class TestContorno : MonoBehaviour
 {
     public Vector3 camPosFinal,camPosInicial;
     public Quaternion camRotFinal,camRotInicial;
-    public ConfigExtraerContornoFlor config;
+    public ConfigExtraerContornoFlor configContorno;
+    public ConfigAgentesDeFlor configAgentes;
     public Texture2D texturaDeContornos;
+    public Texture2D TexturaDeContornos {
+        get => TestRuntime.texturaExtraida?TestRuntime.texturaExtraida : texturaDeContornos;
+    }
     ExtraerContornoFlor extractor;
     public MeshFilter tirarMeshAca;
     public float escala = 0.01f;
@@ -17,9 +21,14 @@ public class TestContorno : MonoBehaviour
     Mesh meshGenerada;
     public int cantSlices = 15;
     public int selectAgente = 0;
+    public float escalaGizmo = 10f;
     public bool actualizarMesh = true;
     public float duracionCrecimiento = 5f;
     public AnimationCurve curvaAlturaFlor = AnimationCurve.EaseInOut(0,0,1,1);
+
+    public float tamLadoBBox = 256;
+    Vector2 offsetCentroContornos = Vector2.zero;
+    float escalaContornosABBox = 1f;
 
     public List<Contorno> contornos;
     float tiempoCrecimiento;
@@ -31,12 +40,13 @@ public class TestContorno : MonoBehaviour
     Vector3[] verticesVivos;
     Agente[] agentesVivos;
 
-    public float distCerca = 30f;
-    public float multRepulsion = 4f;
-    public float multAtraccion = 0.0001f;
-    public float expansion = 0.1f;
-    public float escalaFuerza = 0.01f;
-    public float decaeFuerza = 1f;
+    public float distCerca => configAgentes._distCerca;// = 30f;
+    public float multRepulsion => configAgentes._multRepulsion;// = 4f;
+    public float multAtraccion => configAgentes._multAtraccion;// 0.0001f;
+    public float expansion => configAgentes._expansion;// 0.1f;
+    public float escalaFuerza => configAgentes._escalaFuerza;// 0.01f;
+    public float decaeFuerza => configAgentes._decaeFuerza;// 1f;
+    
     class Agente
     {
         public class AgenteComboIndexDist
@@ -81,7 +91,6 @@ public class TestContorno : MonoBehaviour
 
     void Start()
     {
-        //extractor = new ExtraerContornoFlor(config);
         Extraer();
         Meshificar();
         IniciarAgentes();
@@ -97,6 +106,9 @@ public class TestContorno : MonoBehaviour
     {
         if (contornos == null || contornos.Count == 0) Extraer();
         if (contornos == null || contornos.Count == 0) return;
+
+        Vector2 min = contornos[0].vertices[0];//tengo que pasar todo esto a la parte de EXTRAER los contornos, aca no me sirve
+        Vector2 max = contornos[0].vertices[0];
         
         List<Agente> listaAgentes = new List<Agente>();
 
@@ -120,14 +132,30 @@ public class TestContorno : MonoBehaviour
                     }
                 }
                 agentes.Add(new Agente(v * escala, cercanos.ToArray()));
+
+                if (v.x < min.x) min.x = v.x;
+                if (v.x > max.x) max.x = v.x;
+                if (v.y < min.y) min.y = v.y;
+                if (v.y > max.y) max.y = v.y;
             }
 
             listaAgentes.AddRange(agentes);
         }
 
+        escalaContornosABBox = tamLadoBBox*escala / Mathf.Max( max.x-min.x , max.y-min.y );
+
+        var medianX = listaAgentes.OrderBy(agt=>agt.x).Skip(listaAgentes.Count/2).FirstOrDefault().x;
+        var medianY = listaAgentes.OrderBy(agt=>agt.y).Skip(listaAgentes.Count/2).FirstOrDefault().y;
+
+        offsetCentroContornos = new Vector2(-medianX,-medianY);//queda solo como registro
+
+        for(int i=0,n=listaAgentes.Count;i<n;i++) {
+            listaAgentes[i].x = (listaAgentes[i].x-medianX)*escalaContornosABBox;
+            listaAgentes[i].y = (listaAgentes[i].y-medianY)*escalaContornosABBox;
+        }
         agentesVivos = listaAgentes.ToArray();
 
-        verticesVivos = listaAgentes.Select(agt => new Vector3(agt.x, agt.y, altura * escala)).ToArray();
+        verticesVivos = agentesVivos.Select(agt => new Vector3(agt.x, agt.y, altura * escala)).ToArray();
     }
 
     private void OnDrawGizmosSelected()
@@ -135,24 +163,30 @@ public class TestContorno : MonoBehaviour
         if (verticesVivos != null && verticesVivos.Length > 0 && agentesVivos != null && agentesVivos.Length > 0)
         {
             Gizmos.matrix = tirarMeshAca ? tirarMeshAca.transform.localToWorldMatrix : transform.localToWorldMatrix;
+
+            Gizmos.color = Color.white;
+            Gizmos.DrawWireCube(Vector3.zero,new Vector3(tamLadoBBox,tamLadoBBox,0)*escala);
+
             Gizmos.color = Color.red + Color.green * 0.5f;
             foreach (var ver in verticesVivos)
             {
-                Gizmos.DrawSphere(ver, escala * 0.5f);
+                Gizmos.DrawSphere(Vector3.Scale(ver, new Vector3(1,1,0)), escala * escalaGizmo);
             }
 
             selectAgente = (selectAgente % verticesVivos.Length + verticesVivos.Length) % verticesVivos.Length;
             var vers = verticesVivos[selectAgente];
+            vers.z = 0;
             var agt = agentesVivos[selectAgente];
             Gizmos.color = Color.red;
             Gizmos.DrawCube(vers, Vector3.one * escala * 0.3f + Vector3.forward);
             Gizmos.color = Color.cyan;
-            Gizmos.DrawSphere(vers, escala * 0.55f);
+            Gizmos.DrawSphere(vers, escala * escalaGizmo * 1.001f);
             Gizmos.color = Color.blue;
             for (int i = 0, n = agt.cercanosIdx.Length; i < n; i++)
             {
                 var v2 = verticesVivos[agt.cercanosIdx[i]];
-                Gizmos.DrawSphere(v2, escala * 0.55f);
+                v2.z = 0;
+                Gizmos.DrawSphere(v2, escala * escalaGizmo * 1.001f);
 
                 Gizmos.DrawLine(vers, vers + (v2 - vers).normalized * agt.cercanosDist[i]);
             }
@@ -161,6 +195,8 @@ public class TestContorno : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyUp(KeyCode.Escape)) UnityEngine.SceneManagement.SceneManager.LoadScene(1);
+        if (!Input.GetMouseButton(0) && Input.touchCount==0) return;
         UpdateAgentes(Time.deltaTime);
     }
     void UpdateAgentes(float dt = 1f)
@@ -291,18 +327,25 @@ public class TestContorno : MonoBehaviour
         }
     }
 
+    [ContextMenu("Reiniciar")]
+    public void Reiniciar() {
+        IniciarAgentes();
+        tiempoCrecimiento = 0;
+        Meshificar();
+    }
+
     [ContextMenu("Extraer")]
     public void Extraer()
     {
-        if (config == null) return;
+        if (configContorno == null) return;
         if (extractor != null && extractor.config == null)
         {
             extractor.Dispose();
             extractor = null;
         }
         var extractorTemp = extractor;
-        if (extractorTemp == null) extractorTemp = new ExtraerContornoFlor(config);
-        var matParaProcesar = OpenCvSharp.Unity.TextureToMat(texturaDeContornos);
+        if (extractorTemp == null) extractorTemp = new ExtraerContornoFlor(configContorno);
+        var matParaProcesar = OpenCvSharp.Unity.TextureToMat(TexturaDeContornos);
         contornos = extractorTemp.Procesar(matParaProcesar);
         if (extractor == null) extractorTemp.Dispose();
     }
