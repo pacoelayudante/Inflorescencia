@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/tapapiola.unity
+    guid: 1f37039a1ce208a4e807971822b7857d
+  - enabled: 1
     path: Assets/Scenes/testflor.unity
     guid: 2a74f5eda741b34468381e47650259d0
   - enabled: 1
