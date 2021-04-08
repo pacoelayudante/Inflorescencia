@@ -12,7 +12,7 @@ public class TestContorno : MonoBehaviour
     public ConfigAgentesDeFlor configAgentes;
     public Texture2D texturaDeContornos;
     public Texture2D TexturaDeContornos {
-        get => TestRuntime.texturaExtraida?TestRuntime.texturaExtraida : texturaDeContornos;
+        get => ControlTapa.imagenRecortada?ControlTapa.imagenRecortada : texturaDeContornos;
     }
     ExtraerContornoFlor extractor;
     public MeshFilter tirarMeshAca;
@@ -91,6 +91,7 @@ public class TestContorno : MonoBehaviour
 
     void Start()
     {
+        if (ControlTapa.imagenRecortada) texturaDeContornos = ControlTapa.imagenRecortada;
         Extraer();
         Meshificar();
         IniciarAgentes();
@@ -195,7 +196,7 @@ public class TestContorno : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyUp(KeyCode.Escape)) UnityEngine.SceneManagement.SceneManager.LoadScene(1);
+        if (Input.GetKeyUp(KeyCode.Escape)) UnityEngine.SceneManagement.SceneManager.LoadScene(0);
         if (!Input.GetMouseButton(0) && Input.touchCount==0) return;
         UpdateAgentes(Time.deltaTime);
     }

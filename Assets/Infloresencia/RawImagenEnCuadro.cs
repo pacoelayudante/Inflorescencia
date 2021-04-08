@@ -16,8 +16,10 @@ public class RawImagenEnCuadro : MonoBehaviour
     {
         if (RawImage)
         {
+            RawImage.enabled = true;
             RawImage.texture = textura;
             var esc = new Vector2(textura.width/RectTransform.rect.width, textura.height/RectTransform.rect.height);
+            RawImageRect.offsetMin = RawImageRect.offsetMax = Vector2.zero;
             if (esc.x < esc.y)
             {
                 RawImageRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, RectTransform.rect.width * esc.x/esc.y);
