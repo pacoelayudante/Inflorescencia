@@ -435,7 +435,7 @@ MonoBehaviour:
   altura: 4
   cantSlices: 9
   selectAgente: 16
-  escalaGizmo: 10
+  escalaGizmo: 0.02
   actualizarMesh: 1
   duracionCrecimiento: 10
   curvaAlturaFlor:
@@ -471,6 +471,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  tamLadoBBox: 2.56
+  offsetCentroContornosEscalado: {x: 0, y: 0, z: 0}
 --- !u!4 &974766558
 Transform:
   m_ObjectHideFlags: 0
