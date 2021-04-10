@@ -41,7 +41,7 @@ public class ControlAgentes
                     var d = Vector3.Distance(v, otro) * escala;
                     if (d < distCerca)
                     {
-                        cercanos.Add(new Agente.AgenteComboIndexDist(j + listaAgentes.Count, d * escala));
+                        cercanos.Add(new Agente.AgenteComboIndexDist(j + listaAgentes.Count, d));
                     }
                 }
                 agentes.Add(new Agente(v * escala + offsetEscalado, cercanos.ToArray()));
