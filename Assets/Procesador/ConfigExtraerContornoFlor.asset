@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24a108c49c3c1b248aff06a33654294a, type: 3}
   m_Name: ConfigExtraerContornoFlor
   m_EditorClassIdentifier: 
-  _sizeLimit: 2048
+  _sizeLimit: 480
   _border: 6
   _threshold: 70
   _threshType: 8

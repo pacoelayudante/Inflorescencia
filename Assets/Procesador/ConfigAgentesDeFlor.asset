@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ConfigAgentesDeFlor
   m_EditorClassIdentifier: 
   _distCerca: 0.3
-  _multRepulsion: 0.05
-  _multAtraccion: 30
-  _expansion: 0.02
+  _multRepulsion: 0.03
+  _multAtraccion: 25
+  _expansion: 0.03
   _escalaFuerza: 0.005
   _decaeFuerza: 1

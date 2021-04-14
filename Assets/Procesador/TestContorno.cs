@@ -27,6 +27,8 @@ public class TestContorno : MonoBehaviour
     public float duracionCrecimiento = 5f;
     public AnimationCurve curvaAlturaFlor = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+    public AnimatorUpdateMode updateMode = AnimatorUpdateMode.Normal;
+
     public float tamLadoBBox = 256;
     public Vector3 offsetCentroContornosEscalado = Vector3.zero;
     // float escalaContornosABBox = 1f;
@@ -35,8 +37,11 @@ public class TestContorno : MonoBehaviour
     float tiempoCrecimiento;
 
     List<Vector3> verticesBase, verticesTotales;
+    List<List<Vector3>> progresionDeVertices = new List<List<Vector3>>();
     List<int> triangulos, triangulosTapa, triangulosLado;
     int cantVerticesBase;
+
+    bool meshNecesitaActualizar;
 
     ControlAgentes controlAgentes;
     Vector3[] verticesVivos;
@@ -89,6 +94,8 @@ public class TestContorno : MonoBehaviour
         if (contornos == null || contornos.Count == 0) Extraer();
         controlAgentes = new ControlAgentes(configAgentes, contornos, escala, offsetCentroContornosEscalado);
         verticesVivos = agentesVivos.Select(agt => new Vector3(agt.X, agt.Y, 0)).ToArray();
+        progresionDeVertices.Clear();
+        progresionDeVertices.Add(verticesBase);
     }
 
     private void OnDrawGizmosSelected()
@@ -128,8 +135,25 @@ public class TestContorno : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyUp(KeyCode.Escape)) UnityEngine.SceneManagement.SceneManager.LoadScene(0);
-        if (!Input.GetMouseButton(0) && Input.touchCount == 0) return;
-        UpdateAgentes(Time.deltaTime);
+
+        if (Input.GetMouseButton(0) || Input.touchCount > 0)
+        {
+            if (updateMode == AnimatorUpdateMode.Normal) UpdateAgentes(Time.deltaTime);
+            else if (updateMode == AnimatorUpdateMode.UnscaledTime) UpdateAgentes(1f / 60f);
+        }
+
+        if (meshNecesitaActualizar)
+        {
+            meshNecesitaActualizar = false;
+            ActualizarMeshGenerada();
+        }
+    }
+    void FixedUpdate()
+    {
+        if (Input.GetMouseButton(0) || Input.touchCount > 0)
+        {
+            if (updateMode == AnimatorUpdateMode.AnimatePhysics) UpdateAgentes(Time.fixedDeltaTime);
+        }
     }
     void UpdateAgentes(float dt = 1f)
     {
@@ -140,6 +164,7 @@ public class TestContorno : MonoBehaviour
 
                 controlAgentes.UpdateAgentes(dt);
                 tiempoCrecimiento += dt;
+                meshNecesitaActualizar = true;
                 for (int i = 0, n = controlAgentes.Length; i < n; i++)
                 {
                     verticesVivos[i].x = agentesVivos[i].X;
@@ -147,34 +172,55 @@ public class TestContorno : MonoBehaviour
                     verticesVivos[i].z = tiempoCrecimiento * altura;
                 }
 
-                // Camera.main.transform.position = Vector3.Lerp(camPosInicial,camPosFinal,curvaAlturaFlor.Evaluate(tiempoCrecimiento/duracionCrecimiento));
-                // Camera.main.transform.rotation = Quaternion.Lerp(camRotInicial,camRotFinal,curvaAlturaFlor.Evaluate(tiempoCrecimiento/duracionCrecimiento));
-                Camera.main.transform.position = Vector3.Lerp(camPosInicial, camPosFinal, (tiempoCrecimiento / duracionCrecimiento));
-                Camera.main.transform.rotation = Quaternion.Lerp(camRotInicial, camRotFinal, (tiempoCrecimiento / duracionCrecimiento));
-            }
-            if (actualizarMesh && meshGenerada != null)
-            {
-                for (int v = 0, n = verticesVivos.Length; v < n; v++)
+                //aca tengo que fijarme si el crecimiento supero un umbral como para fijar el estado actual del contorno
+                if (progresionDeVertices.Count < cantSlices * tiempoCrecimiento / duracionCrecimiento)
                 {
-                    verticesTotales[v] = verticesVivos[v];
+                    //Debug.Log($"nueva foto de slice  {progresionDeVertices.Count} , progreso = {tiempoCrecimiento / duracionCrecimiento} - ({cantSlices * tiempoCrecimiento / duracionCrecimiento})");
+                    progresionDeVertices.Add(verticesVivos.ToList());// esto del ToList es porque tengo Linq activado, mi idea es crear una copa del actual
+                }
 
-                    for (int s = 0; s <= cantSlices; s++)
+                var tNorm = (tiempoCrecimiento / duracionCrecimiento);
+                Camera.main.transform.position = Vector3.Lerp(camPosInicial, camPosFinal, tNorm * tNorm);
+                Camera.main.transform.rotation = Quaternion.Lerp(camRotInicial, camRotFinal, tNorm);
+            }
+        }
+    }
+    void ActualizarMeshGenerada()
+    {
+        if (meshGenerada != null)
+        {
+            for (int v = 0, n = verticesVivos.Length; v < n; v++)
+            {
+                verticesTotales[v] = verticesVivos[v];
+
+                for (int s = 0; s <= cantSlices; s++)
+                {
+                    var amt = s / (float)cantSlices;
+                    //aca tengo que decidir si usar estados guardados o el estado vivo
+                    if (s < progresionDeVertices.Count)
                     {
-                        var amt = s / (float)cantSlices;
-
-                        // var vecGo = Vector3.Lerp(verticesBase[v],verticesVivos[v],curvaAlturaFlor.Evaluate( amt ));
-                        // vecGo.z = amt;
-                        var vecGo = Vector3.Lerp(verticesBase[v], verticesVivos[v], amt);
+                        //hay estado progresivo
+                        var vecGo = progresionDeVertices[s][v];
+                        vecGo.z = curvaAlturaFlor.Evaluate(amt) * altura * tiempoCrecimiento / duracionCrecimiento;
+                        verticesTotales[v + cantVerticesBase * (cantSlices) - s * cantVerticesBase] = vecGo;
+                    }
+                    else
+                    {//lerpear con el ultimo, slice los vertices vivos
+                     // ok los vertices base tiene que pasar a ser la anterior figura guardada
+                     // los vivos la "actual figura"
+                     // y los vivos ahora seran nomas el ultimo slice? o mas bien todos los slices que no tengan 
+                     // una forma guardada
+                        var vecGo = Vector3.Lerp(progresionDeVertices[progresionDeVertices.Count-1][v], verticesVivos[v], amt);
                         vecGo.z = curvaAlturaFlor.Evaluate(amt) * altura * tiempoCrecimiento / duracionCrecimiento;
                         verticesTotales[v + cantVerticesBase * (cantSlices) - s * cantVerticesBase] = vecGo;
                     }
                 }
-                meshGenerada.vertices = verticesTotales.ToArray();
-
-                meshGenerada.RecalculateNormals();
-                meshGenerada.RecalculateBounds();
-                meshGenerada.RecalculateTangents();
             }
+            meshGenerada.vertices = verticesTotales.ToArray();
+
+            meshGenerada.RecalculateNormals();
+            meshGenerada.RecalculateBounds();
+            meshGenerada.RecalculateTangents();
         }
     }
 
@@ -269,7 +315,7 @@ public class TestContorno : MonoBehaviour
             }
 
             triangulos.AddRange(triangulosTapa);
-            var offaltura = Vector3.forward * altura*0;
+            var offaltura = Vector3.forward * altura * 0;
 
             verticesTotales = new List<Vector3>();
             verticesTotales.AddRange(verticesBase.Select(v => v + offaltura));
