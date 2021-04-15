@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3304fa68829a6084b96c7db41fc970df, type: 3}
   m_Name: ConfigAgentesDeFlor
   m_EditorClassIdentifier: 
-  _distCerca: 0.3
-  _multRepulsion: 0.03
-  _multAtraccion: 25
-  _expansion: 0.03
-  _escalaFuerza: 0.005
+  _distCerca: 0.12
+  _multRepulsion: 0.04
+  _multAtraccion: 30
+  _expansion: 0.04
+  _escalaFuerza: 0.01
   _decaeFuerza: 1

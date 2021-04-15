@@ -6,6 +6,7 @@ using LibTessDotNet;
 
 public class TestContorno : MonoBehaviour
 {
+    public bool autoSimulate = true;
     public Vector3 camPosFinal, camPosInicial;
     public Quaternion camRotFinal, camRotInicial;
     public ConfigExtraerContornoFlor configContorno;
@@ -38,6 +39,7 @@ public class TestContorno : MonoBehaviour
 
     List<Vector3> verticesBase, verticesTotales;
     List<List<Vector3>> progresionDeVertices = new List<List<Vector3>>();
+    List<float> tiemposProgreso = new List<float>();
     List<int> triangulos, triangulosTapa, triangulosLado;
     int cantVerticesBase;
 
@@ -95,7 +97,9 @@ public class TestContorno : MonoBehaviour
         controlAgentes = new ControlAgentes(configAgentes, contornos, escala, offsetCentroContornosEscalado);
         verticesVivos = agentesVivos.Select(agt => new Vector3(agt.X, agt.Y, 0)).ToArray();
         progresionDeVertices.Clear();
+        tiemposProgreso.Clear();
         progresionDeVertices.Add(verticesBase);
+        tiemposProgreso.Add(0f);
     }
 
     private void OnDrawGizmosSelected()
@@ -110,6 +114,8 @@ public class TestContorno : MonoBehaviour
             foreach (var ver in verticesVivos)
             {
                 Gizmos.DrawSphere(Vector3.Scale(ver, new Vector3(1, 1, 0)), escalaGizmo);
+                
+                // Gizmos.DrawSphere(Vector3.Scale(ver, new Vector3(1, 1, 1/escala)), escalaGizmo);
             }
 
             selectAgente = (selectAgente % verticesVivos.Length + verticesVivos.Length) % verticesVivos.Length;
@@ -136,7 +142,7 @@ public class TestContorno : MonoBehaviour
     {
         if (Input.GetKeyUp(KeyCode.Escape)) UnityEngine.SceneManagement.SceneManager.LoadScene(0);
 
-        if (Input.GetMouseButton(0) || Input.touchCount > 0)
+        if (autoSimulate || Input.GetMouseButton(0) || Input.touchCount > 0)
         {
             if (updateMode == AnimatorUpdateMode.Normal) UpdateAgentes(Time.deltaTime);
             else if (updateMode == AnimatorUpdateMode.UnscaledTime) UpdateAgentes(1f / 60f);
@@ -150,7 +156,7 @@ public class TestContorno : MonoBehaviour
     }
     void FixedUpdate()
     {
-        if (Input.GetMouseButton(0) || Input.touchCount > 0)
+        if (autoSimulate || Input.GetMouseButton(0) || Input.touchCount > 0)
         {
             if (updateMode == AnimatorUpdateMode.AnimatePhysics) UpdateAgentes(Time.fixedDeltaTime);
         }
@@ -173,10 +179,12 @@ public class TestContorno : MonoBehaviour
                 }
 
                 //aca tengo que fijarme si el crecimiento supero un umbral como para fijar el estado actual del contorno
-                if (progresionDeVertices.Count < cantSlices * tiempoCrecimiento / duracionCrecimiento)
+                var cantSlicesEsparados = cantSlices * curvaAlturaFlor.Evaluate( tiempoCrecimiento / duracionCrecimiento );
+                if (progresionDeVertices.Count < cantSlicesEsparados)
                 {
-                    //Debug.Log($"nueva foto de slice  {progresionDeVertices.Count} , progreso = {tiempoCrecimiento / duracionCrecimiento} - ({cantSlices * tiempoCrecimiento / duracionCrecimiento})");
+                    // Debug.Log($"nueva foto de slice  {progresionDeVertices.Count} , progreso = {tiempoCrecimiento / duracionCrecimiento} - ({cantSlices * tiempoCrecimiento / duracionCrecimiento})");
                     progresionDeVertices.Add(verticesVivos.ToList());// esto del ToList es porque tengo Linq activado, mi idea es crear una copa del actual
+                    tiemposProgreso.Add(tiempoCrecimiento/duracionCrecimiento);
                 }
 
                 var tNorm = (tiempoCrecimiento / duracionCrecimiento);
@@ -201,7 +209,8 @@ public class TestContorno : MonoBehaviour
                     {
                         //hay estado progresivo
                         var vecGo = progresionDeVertices[s][v];
-                        vecGo.z = curvaAlturaFlor.Evaluate(amt) * altura * tiempoCrecimiento / duracionCrecimiento;
+                        // vecGo.z = curvaAlturaFlor.Evaluate(amt) * altura * tiempoCrecimiento / duracionCrecimiento;
+                        vecGo.z = tiemposProgreso[s] * altura ;
                         verticesTotales[v + cantVerticesBase * (cantSlices) - s * cantVerticesBase] = vecGo;
                     }
                     else
@@ -210,8 +219,11 @@ public class TestContorno : MonoBehaviour
                      // los vivos la "actual figura"
                      // y los vivos ahora seran nomas el ultimo slice? o mas bien todos los slices que no tengan 
                      // una forma guardada
-                        var vecGo = Vector3.Lerp(progresionDeVertices[progresionDeVertices.Count-1][v], verticesVivos[v], amt);
-                        vecGo.z = curvaAlturaFlor.Evaluate(amt) * altura * tiempoCrecimiento / duracionCrecimiento;
+                     var ultiIndex = progresionDeVertices.Count-1;
+                     amt = Mathf.InverseLerp(ultiIndex/(float)cantSlices,1f,amt);
+                        var vecGo = Vector3.Lerp(progresionDeVertices[ultiIndex][v], verticesVivos[v], amt);
+                        // vecGo.z = curvaAlturaFlor.Evaluate(amt) * altura * tiempoCrecimiento / duracionCrecimiento;
+                        vecGo.z =  altura * Mathf.Lerp(tiemposProgreso[ultiIndex],tiempoCrecimiento / duracionCrecimiento,amt);
                         verticesTotales[v + cantVerticesBase * (cantSlices) - s * cantVerticesBase] = vecGo;
                     }
                 }
